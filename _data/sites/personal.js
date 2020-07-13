@@ -5,5 +5,9 @@ module.exports = {
     frequency: 60 * 23, // 23 hours
     freshChrome: "site",
   },
-  urls: ["https://www.zackseuberling.com/"],
+  urls: [
+    "https://www.zackseuberling.com/",
+    "https://www.seattledesign.info/",
+    "https://www.outofoffice.works/",
+  ],
 };

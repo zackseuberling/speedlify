@@ -7,5 +7,9 @@ module.exports = {
     // chrome with each run instead of each site in every run (it’s faster)
     freshChrome: "run",
   },
-  urls: ["https://www.lelli.store/", "https://chadkloepfer.com"],
+  urls: [
+    "https://www.lelli.store/",
+    "https://chadkloepfer.com",
+    "https://www.bidoun.org",
+  ],
 };

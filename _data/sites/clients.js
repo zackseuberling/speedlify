@@ -11,5 +11,6 @@ module.exports = {
     "https://www.lelli.store/",
     "https://chadkloepfer.com",
     "https://www.bidoun.org",
+    "https://www.pingchong.org",
   ],
 };

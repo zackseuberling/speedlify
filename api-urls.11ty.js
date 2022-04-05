@@ -12,14 +12,8 @@ class ApiUrls {
 
 	render(data) {
 		let resultData = {};
-		for(let vertical in data.sites) {
-			let verticalData = data.sites[vertical];
-			for(let url of verticalData.urls) {
-				resultData[url] = {
-					vertical,
-					hash: shortHash(url),
-				};
-			}
+		for(let urlData of data.urlsForApi) {
+			resultData[urlData.requestedUrl] = urlData;
 		}
 		return JSON.stringify(resultData, null, 2);
 	}

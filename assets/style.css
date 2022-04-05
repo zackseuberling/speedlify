@@ -89,7 +89,9 @@ abbr {
 	max-width: 40em;
 	text-align: center;
 }
-
+.speedlify-subhed ~ .speedlify-subhed {
+	margin-top: 1em;
+}
 
 /* Leaderboard */
 
@@ -102,8 +104,41 @@ abbr {
 	margin: 5em auto;
 	max-width: 100rem; /* 1600px /16 */
 }
-.leaderboard-number {
-	font-weight: 600;
+.leaderboard-directlink {
+	text-decoration: none;
+}
+.leaderboard-directlink span {
+	font-size: 0.75em; /* 12px /16 */
+	margin-right: 2px;
+	vertical-align: text-top;
+}
+.leaderboard-trophies {
+	white-space: nowrap;
+}
+.leaderboard-url {
+	width: 100%;
+}
+.leaderboard-redirect-error,
+.leaderboard-redirect-warn {
+	text-transform: uppercase;
+	font-size: 0.75em; /* 12px /16 */
+	font-weight: 400;
+	margin-left: 1em;
+}
+.leaderboard-redirect-error:before {
+	content: "⛔️ ";
+}
+.leaderboard-redirect-warn:before {
+	content: "⚠️ ";
+}
+.leaderboard-redirect-warn code {
+	text-transform: none;
+}
+.leaderboard-redirect-warn {
+	color: hsl(58, 100%, 71%);
+}
+.leaderboard-redirect-error {
+	color: hsl(1, 100%, 58%);
 }
 .leaderboard-list {
 	width: auto;
@@ -111,7 +146,17 @@ abbr {
 	margin-right: auto;
 }
 .leaderboard-list-entry {
-	border-top: 1px solid #888;
+	border-top: 1px solid #444;
+}
+.leaderboard-list-entry:not(.expanded):target {
+	background-color: #444;
+}
+.leaderboard-list-entry.expanded {
+	border-color: #888;
+}
+.leaderboard-list-entry-badrank {
+	border-top: 1px solid hsl(333, 100%, 50%);
+	border-bottom: 1px solid hsl(333, 100%, 50%);
 }
 .js .leaderboard-list-entry-details:not(.expanded) {
 	display: none;
@@ -137,6 +182,9 @@ abbr {
 }
 .leaderboard-list-entry.expanded .leaderboard-expand-icon {
 	transform: rotate(90deg);
+}
+.leaderboard-list-entry.expanded [data-expand-alias] {
+	border-color: transparent;
 }
 .leaderboard-list-entry-details > td {
 	padding: 0;
@@ -172,6 +220,8 @@ abbr {
 	display: inline-block;
 	text-decoration: none;
 	background-color: #444;
+	border-radius: 50px;
+	border: 1px solid #aaa;
 	padding: .5em 1em;
 	text-align: center;
 }
@@ -257,15 +307,45 @@ abbr {
 	color: #aaa;
 	font-size: 0.8125em; /* 13px /16 */
 }
-.hundo-emojis {
-	letter-spacing: 4px;
+.leaderboard-score-circles {
+	display: inline-flex;
+	margin-right: 8px;
+	flex-wrap: nowrap;
 }
-.hundo-emojis-400 {
+.leaderboard-score-sum {
+	display: inline-block;
+	vertical-align: middle;
+}
+.leaderboard-score-circles .speedlify-score {
+	font-size: 0.6875rem; /* 11px /16 */
+	font-weight: 600;
+	line-height: 1;
+}
+.leaderboard-score-circles .speedlify-summary {
+	display: none;
+}
+.leaderboard-score-circles-400 .speedlify-score {
+	border-color: currentColor;
+	color: #bcffc2;
+}
+@media (min-width: 37.5em) { /* 600px */
+	.leaderboard-score-circles .speedlify-score {
+		font-size: 0.8125rem; /* 13px /16 */
+	}
+}
+
+/* Score Cell RWD */
+.leaderboard-score{
 	white-space: nowrap;
 }
-@media (min-width: 64em) { /* 1024px */
-	.hundo-emojis-400:after {
-		content: " 😍";
+@media (max-width: 28.0625em) { /* 449px */
+	.leaderboard-score{
+		display: none;
+	}
+}
+@media (max-width: 37.4375em) { /* 599px */
+	.leaderboard-score-circles {
+		display: none;
 	}
 }
 
@@ -283,6 +363,26 @@ abbr {
 	.js .layout {
 		grid-template-columns: repeat(auto-fill, 49%);
 	}
+}
+
+/* File sizes */
+/*.filesize {}*/
+.filesize-label-lg {
+	display: none;
+}
+
+@media (min-width: 31.25em) { /* 500px */
+	.filesize-label-sm {
+		display: none;
+	}
+	.filesize-label-lg {
+		display: inline;
+	}
+}
+[data-numeric-value="0"] .filesize-label-sm,
+[data-numeric-value="0"] .filesize-label-lg,
+[data-numeric-value="0"] .count {
+	display: none;
 }
 
 /* Charts */
@@ -361,4 +461,42 @@ abbr {
 }
 .ct-series-f.ct-series-f .ct-line {
 	stroke: var(--speedlify-color-6);
+}
+
+
+/* Category stats */
+.category-stats {
+	margin: 2em auto 4em;
+	max-width: 25em; /* 400px /16 */
+}
+.category-stats,
+.category-stats-entry {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+}
+.category-stats-entry {
+	flex-basis: 20em;
+	padding: 0 1em;
+}
+.category-stats dt,
+.category-stats dd {
+	flex-basis: 4.6875em; /* 150px /32 */
+}
+.category-stats dt {
+	flex-grow: 999;
+	min-width: 9.375em; /* 150px /16 */
+	text-align: right;
+}
+.category-stats dd {
+	flex-grow: 1;
+	text-align: right;
+	margin: 0 0 0 .5em;
+	font-size: 2em;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+}
+.category-stats dd span {
+	font-weight: 100;
 }

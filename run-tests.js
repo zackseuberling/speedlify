@@ -1,13 +1,12 @@
 require("dotenv").config();
+const path = require("path");
 const fs = require("fs").promises;
 const shortHash = require("short-hash");
-const fetch = require("node-fetch");
 const fastglob = require("fast-glob");
 const PerfLeaderboard = require("performance-leaderboard");
 
 const NUMBER_OF_RUNS = 3;
 const FREQUENCY = 60; // in minutes
-const BUILD_HOOK_TRIGGER_URL = process.env.BUILD_HOOK_TRIGGER_URL;
 const NETLIFY_MAX_LIMIT = 15; // in minutes, netlify limit
 const ESTIMATED_MAX_TIME_PER_TEST = 0.75; // in minutes, estimate based on looking at past builds
 
@@ -27,19 +26,13 @@ const prettyTime = (seconds) => {
 	);
 }
 
-async function maybeTriggerAnotherNetlifyBuild(dateTestsStarted, numberOfUrls) {
-	let minutesRemaining = NETLIFY_MAX_LIMIT - (Date.now() - dateTestsStarted)/(1000*60)
-	// Use build hook to trigger another build if we’re nearing the 15 minute limit
+async function tryToPreventNetlifyBuildTimeout(dateTestsStarted, numberOfUrls, estimatedTimePerBuild = ESTIMATED_MAX_TIME_PER_TEST) {
+	let minutesRemaining = NETLIFY_MAX_LIMIT - (Date.now() - dateTestsStarted)/(1000*60);
 	if(process.env.CONTEXT &&
 		process.env.CONTEXT === "production" &&
 		NETLIFY_MAX_LIMIT &&
-		minutesRemaining < numberOfUrls * ESTIMATED_MAX_TIME_PER_TEST) {
+		minutesRemaining < numberOfUrls * estimatedTimePerBuild) {
 		console.log( `run-tests has about ${minutesRemaining} minutes left, but the next run has ${numberOfUrls} urls. Saving it for the next build.` );
-		if(BUILD_HOOK_TRIGGER_URL) {
-			console.log( "Trying to trigger another build using a build hook." );
-			let res = await fetch(BUILD_HOOK_TRIGGER_URL, { method: 'POST', body: '{}' })
-			console.log( await res.text() );
-		}
 		return true;
 	}
 	return false;
@@ -60,6 +53,7 @@ async function maybeTriggerAnotherNetlifyBuild(dateTestsStarted, numberOfUrls) {
 	let lastRuns;
 	try {
 		lastRuns = require(lastRunsFilename);
+		console.log( "Last runs at start: ", JSON.stringify(lastRuns) );
 	} catch (e) {
 		console.log(`There are no known last run timestamps`);
 		lastRuns = {};
@@ -71,15 +65,20 @@ async function maybeTriggerAnotherNetlifyBuild(dateTestsStarted, numberOfUrls) {
 
 	for(let file of verticals) {
 		let group = require(file);
-		let key = file.split("/").pop().replace(/\.js$/, "");
-
-		if(await maybeTriggerAnotherNetlifyBuild(dateTestsStarted, group.urls.length)) {
-			break;
+		if(typeof group === "function") {
+			group = await group();
 		}
+		let key = file.split("/").pop().replace(/\.js$/, "");
 
 		if(group.skip) {
 			console.log( `Skipping ${key} (you told me to in your site config)` );
 			continue;
+		}
+
+		// TODO maybe skip this step if it’s the first build?
+		if(await tryToPreventNetlifyBuildTimeout(dateTestsStarted, group.urls.length, group.estimatedTimePerBuild)) {
+			// stop everything, we’re too close to the timeout
+			return;
 		}
 
 		let runFrequency =
@@ -107,16 +106,22 @@ async function maybeTriggerAnotherNetlifyBuild(dateTestsStarted, numberOfUrls) {
 
 		let runCount =
 			group.options && group.options.runs ? group.options.runs : NUMBER_OF_RUNS;
+		let options = Object.assign({
+			chromeFlags: ['--headless', '--disable-dev-shm-usage']
+		}, group.options);
+
 		let results = await PerfLeaderboard(
 			group.urls,
 			runCount,
-			group.options || {}
+			options,
 		);
 
 		let promises = [];
 		for(let result of results) {
 			let id = shortHash(result.url);
-			let dir = `${dataDir}results/${id}/`;
+			let isIsolated = group.options && group.options.isolated;
+			let dir = `${dataDir}results/${isIsolated ? `${key}/` : ""}${id}/`;
+
 			let filename = `${dir}date-${dateTestsStarted}.json`;
 			await fs.mkdir(dir, { recursive: true });
 			promises.push(fs.writeFile(filename, JSON.stringify(result, null, 2)));
@@ -129,6 +134,6 @@ async function maybeTriggerAnotherNetlifyBuild(dateTestsStarted, numberOfUrls) {
 
 		// Write the last run time to avoid re-runs
 		await fs.writeFile(lastRunsFilename, JSON.stringify(lastRuns, null, 2));
-		console.log( `Wrote new ${lastRunsFilename}` );
+		console.log( `Last runs after "${key}":`, JSON.stringify(lastRuns) );
 	}
 })();

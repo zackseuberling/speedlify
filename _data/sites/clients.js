@@ -8,9 +8,9 @@ module.exports = {
     freshChrome: "run",
   },
   urls: [
-    "https://www.lelli.store/",
-    "https://chadkloepfer.com",
-    "https://www.bidoun.org",
+    "https://www.lelli.store",
     "https://www.pingchong.org",
+    "https://www.bidoun.org",
+    "https://chadkloepfer.com",
   ],
 };
